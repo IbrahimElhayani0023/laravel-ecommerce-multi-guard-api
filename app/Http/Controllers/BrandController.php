@@ -12,7 +12,7 @@ class BrandController extends Controller
      */
     public function index()
     {
-        //
+        return Brand::all();
     }
 
     /**
@@ -20,7 +20,18 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image'],
+        ]);
+
+        $validator['slug'] = str_replace(' ', '-', $validator['name']);
+
+        if ($request->has('image')) $validator['image'] = $request->image->store('brands', 'public');
+
+        else $validator['image'] = null;
+        
+        return Brand::create($validator);
     }
 
     /**
@@ -28,7 +39,7 @@ class BrandController extends Controller
      */
     public function show(Brand $brand)
     {
-        //
+        return $brand->with('products')->get();
     }
 
     /**
@@ -36,7 +47,23 @@ class BrandController extends Controller
      */
     public function update(Request $request, Brand $brand)
     {
-        //
+        $validator = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image'],
+        ]);
+
+        $validator['slug'] = str_replace(' ', '-', $validator['name']);
+
+        if ($request->has('image')) {
+
+            $validator['image'] = $request->image->store('brands', 'public');
+
+            $this->removeBrandImage($brand->image);
+        } else $validator['image'] = $brand->image;
+
+        $brand->update($validator);
+
+        return response()->json(['message' => 'Brand updated successfully'], 200);
     }
 
     /**
@@ -44,6 +71,19 @@ class BrandController extends Controller
      */
     public function destroy(Brand $brand)
     {
-        //
+        $this->removeBrandImage($brand->image);
+
+        $brand->delete();
+
+        return response()->json(['message' => 'Brand deleted successfully'], 200);
+    }
+
+    public function removeBrandImage($image)
+    {
+        if ($image == null) return;
+
+        $path = public_path('brands/' . $image);
+
+        return file_exists($path) ? unlink($path) : null;
     }
 }

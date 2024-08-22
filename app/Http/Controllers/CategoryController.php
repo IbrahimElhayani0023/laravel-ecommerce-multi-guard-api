@@ -12,7 +12,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        //
+        return Category::all();
     }
 
     /**
@@ -20,7 +20,21 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image'],
+        ]);
+
+        $validator['slug'] = str_replace(' ', '-', $validator['name']);
+
+        if ($request->has('image')) $validator['image'] = $request->image->store('categories', 'public');
+
+        else $validator['image'] = null;
+
+        return response()->json([
+            'message' => 'category created successfully',
+            'category' => Category::create($validator)
+        ], 201);
     }
 
     /**
@@ -28,7 +42,7 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        //
+        return $category->with('products')->get();
     }
 
     /**
@@ -36,7 +50,24 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        //
+        $validator = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image'],
+        ]);
+
+        $validator['slug'] = str_replace(' ', '-', $validator['name']);
+
+        if ($request->has('image')) {
+
+            $validator['image'] = $request->image->store('categories', 'public');
+
+            $this->removeCategoryImage($category->image);
+        
+        } else $validator['image'] = $category->image;
+
+        $category->update($validator);
+
+        return response()->json(['message' => 'category updated successfully'], 200);
     }
 
     /**
@@ -44,6 +75,20 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        //
+        $this->removeCategoryImage($category->image);
+
+        $category->delete();
+
+        return response()->json(['message' => 'category deleted successfully'], 200);
+    }
+
+    // remove image from storage
+    private function removeCategoryImage($path)
+    {
+        if ($path == null) return;
+
+        $path = public_path('categories/' . $path);
+
+        return file_exists($path) ? unlink($path) : null;
     }
 }
