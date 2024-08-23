@@ -14,7 +14,7 @@ class ProductItem extends Model
         'product_id',
         'order_id',
         'product_name',
-        'product_total_price',
+        'product_price',
         'product_quantity'
     ];
 

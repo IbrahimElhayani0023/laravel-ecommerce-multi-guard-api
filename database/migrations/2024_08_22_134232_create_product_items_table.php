@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->string('product_name', 100);
-            $table->double('product_total_price', 8, 2);
+            $table->double('product_price', 8, 2);
             $table->integer('product_quantity');
             $table->softDeletes();
             $table->timestamps();
